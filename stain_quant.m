@@ -1,4 +1,4 @@
-function edge_stain_quant(exp_dir,varargin)
+function stain_quant(exp_dir,varargin)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Setup variables and parse command line
