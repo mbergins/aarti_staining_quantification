@@ -10,6 +10,9 @@ i_p.addRequired('exp_dir',@(x)exist(x,'dir') == 7);
 i_p.addParameter('edge_search_str','*Cy5.TIF',@(x)ischar(x));
 i_p.addParameter('second_search_str','*FWTR.TIF',@(x)ischar(x));
 
+i_p.addParameter('background_threshold',300,@(x)isnumeric(x));
+i_p.addParameter('background_min_size',250000,@(x)isnumeric(x));
+
 i_p.parse(exp_dir,varargin{:});
 
 edge_files = dir(fullfile(exp_dir,i_p.Results.edge_search_str));
@@ -52,32 +55,41 @@ for i = 1:length(secondary_files)
     secondary_hp = apply_high_pass_filter(secondary,10);
     
     vesicle_binary = secondary_hp > 0.5*std(secondary_hp(:));
-    
     vesicle_binary = vesicle_binary & not(edge_binary);
-    
     vesicle_binary = bwpropopen(vesicle_binary,'Area',10,'connectivity',4);
-
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Background Finding
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    background_region = edge_image < i_p.Results.background_threshold;
+    
+    background_region = imfill(background_region,'holes');
+    background_region = bwpropopen(background_region,...
+        'Area',i_p.Results.background_min_size,'connectivity',4);
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Visualization
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     highlight_set = int16(edge_binary);
     highlight_set(vesicle_binary) = 2;
+    highlight_set(background_region) = 3;
     
     %suggestion from Colorbrewer
-    highlight_cmap = [[175,141,195]/255;[127,191,123]/255];
+    highlight_cmap = [[175,141,195]/255;[127,191,123]/255;[5,113,176]/255];
     
     edge_image_highlight = create_highlighted_image(edge_image_norm,highlight_set,...
         'mix_percent',0.5,'color_map',highlight_cmap);
     secondary_image_highlight = create_highlighted_image(secondary_norm,highlight_set,...
         'mix_percent',0.5,'color_map',highlight_cmap);
-        
+    
     %%Visualization Output
     [path,edge_name,~] = fileparts(this_edge_file);
     [~,sec_name,~] = fileparts(this_secondary_file);
     
     imwrite(edge_image_highlight,fullfile(path,[edge_name,'_edge.png']));
     imwrite(secondary_image_highlight,fullfile(path,[sec_name,'_secondary_edge.png']));
-
+    
+    imwrite(ratio_image,fullfile(path,[sec_name,'_ratio.png']));
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Data Collection
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
