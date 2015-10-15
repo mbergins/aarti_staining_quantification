@@ -1,5 +1,5 @@
 function stain_quant(exp_dir,varargin)
-
+%Quantify Ecad Stains
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Setup variables and parse command line
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,7 +30,7 @@ addpath(genpath(misc_image_processing_dir));
 % Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-intensity_measurements = [];
+measurements = [];
 
 %this should be big enough to hold all the results from banding the
 %intensity values
@@ -94,19 +94,21 @@ for file_num = 1:length(secondary_files)
     [path,edge_name,~] = fileparts(this_edge_file);
     [~,sec_name,~] = fileparts(this_secondary_file);
     
-    imwrite(edge_image_highlight,fullfile(path,[edge_name,'_edge.png']));
-    imwrite(secondary_image_highlight,fullfile(path,[sec_name,'_secondary_edge.png']));
+    imwrite(edge_image_highlight,fullfile(path,[edge_name,'_highlight.png']));
+    imwrite(secondary_image_highlight,fullfile(path,[sec_name,'_highlight.png']));
     
     imwrite(ratio_image,fullfile(path,[sec_name,'_ratio.png']));
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Data Collection
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    intensity_measurements = [intensity_measurements; ...
+    measurements = [measurements; ...
         mean(edge_image(edge_binary)),mean(secondary(edge_binary)),...
         mean(ratio_image(edge_binary)),mean(edge_image(vesicle_binary)),...
-        mean(secondary(vesicle_binary)),mean(ratio_image(vesicle_binary))]; %#ok<AGROW>
-    
+        mean(secondary(vesicle_binary)),mean(ratio_image(vesicle_binary)),...
+        sum(sum(edge_binary))/sum(sum(~background_region)),...
+        sum(sum(vesicle_binary))/sum(sum(~background_region))]; %#ok<AGROW>
+        
     %Ratio Image Banding
     % Check to make sure there is a background region found, otherwise,
     % infinite loop
@@ -132,8 +134,8 @@ end
 % Data Output
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 headers = {'Edge in Edge','Edge in 2nd','Edge in Ratio','Vesicle in Edge',...
-    'Vesicle in 2nd','Vesicle in Ratio'};
-csvwrite_with_headers(fullfile(exp_dir,'quantification.csv'),intensity_measurements,...
+    'Vesicle in 2nd','Vesicle in Ratio','Edge Area Percent','Vesicle Area Percent'};
+csvwrite_with_headers(fullfile(exp_dir,'quantification.csv'),measurements,...
     headers);
 
 ratio_bands = ratio_bands(:,1:max_band_count);
