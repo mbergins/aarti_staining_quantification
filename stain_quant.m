@@ -35,6 +35,7 @@ measurements = [];
 %this should be big enough to hold all the results from banding the
 %intensity values
 ratio_bands = zeros(length(secondary_files),10000);
+vesicle_ratio_bands = zeros(length(secondary_files),10000);
 
 max_band_count = 0;
 
@@ -108,7 +109,7 @@ for file_num = 1:length(secondary_files)
         mean(secondary(vesicle_binary)),mean(ratio_image(vesicle_binary)),...
         sum(sum(edge_binary))/sum(sum(~background_region)),...
         sum(sum(vesicle_binary))/sum(sum(~background_region))]; %#ok<AGROW>
-        
+    
     %Ratio Image Banding
     % Check to make sure there is a background region found, otherwise,
     % infinite loop
@@ -120,6 +121,9 @@ for file_num = 1:length(secondary_files)
         while (band_limits(1) <= max(background_dist(:)))
             this_band = background_dist > band_limits(1) & background_dist <= band_limits(2);
             ratio_bands(file_num,band_counter) = mean(ratio_image(this_band));
+            
+            this_band_vesicle = this_band & vesicle_binary;
+            vesicle_ratio_bands(file_num,band_counter) = mean(ratio_image(this_band_vesicle));
             
             band_counter = band_counter + 1;
             band_limits = band_limits + i_p.Results.band_size;
@@ -148,3 +152,7 @@ end
 
 csvwrite_with_headers(fullfile(exp_dir,'ratio_band_means.csv'),ratio_bands,...
     ratio_headers);
+
+vesicle_ratio_bands = vesicle_ratio_bands(:,1:max_band_count);
+csvwrite_with_headers(fullfile(exp_dir,'ratio_band_vesicle.csv'),...
+    vesicle_ratio_bands,ratio_headers);
