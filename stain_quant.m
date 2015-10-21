@@ -13,6 +13,8 @@ i_p.addParameter('second_search_str','*FWTR.TIF',@(x)ischar(x));
 i_p.addParameter('background_threshold',300,@(x)isnumeric(x));
 i_p.addParameter('background_min_size',250000,@(x)isnumeric(x));
 
+i_p.addParameter('vesicle_thresh',NaN,@(x)isnumeric(x));
+
 i_p.addParameter('band_size',100,@(x)isnumeric(x));
 
 i_p.parse(exp_dir,varargin{:});
@@ -39,6 +41,8 @@ vesicle_ratio_bands = zeros(length(secondary_files),10000);
 
 max_band_count = 0;
 
+inside_pixels = [];
+
 for file_num = 1:length(secondary_files)
     this_secondary_file = fullfile(exp_dir,secondary_files(file_num).name);
     this_edge_file = fullfile(exp_dir,edge_files(file_num).name);
@@ -49,24 +53,7 @@ for file_num = 1:length(secondary_files)
     
     secondary_norm = normalize_image(secondary);
     edge_image_norm = normalize_image(edge_image);
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Edge Finding
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    edge_hp = apply_high_pass_filter(edge_image,10);
-    
-    edge_binary = edge_hp > 0.25*std(edge_hp(:));
-    edge_binary = bwpropopen(edge_binary,'Area',400,'connectivity',4);
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Vesicle Finding
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    secondary_hp = apply_high_pass_filter(secondary,10);
-    
-    vesicle_binary = secondary_hp > 0.5*std(secondary_hp(:));
-    vesicle_binary = vesicle_binary & not(edge_binary);
-    vesicle_binary = bwpropopen(vesicle_binary,'Area',10,'connectivity',4);
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Background Finding
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -75,6 +62,32 @@ for file_num = 1:length(secondary_files)
     background_region = imfill(background_region,'holes');
     background_region = bwpropopen(background_region,...
         'Area',i_p.Results.background_min_size,'connectivity',4);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Edge Finding
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    edge_hp = apply_high_pass_filter(edge_image,10);
+    
+    edge_binary = edge_hp > 0.25*std(edge_hp(~background_region));
+    edge_binary = bwpropopen(edge_binary,'Area',400,'connectivity',4);
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Vesicle Finding
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    secondary_hp = apply_high_pass_filter(secondary,10);
+    
+    if (isnan(i_p.Results.vesicle_thresh))
+        vesicle_thresh = 0.5*std(secondary_hp(~background_region));
+    else
+        vesicle_thresh = i_p.Results.vesicle_thresh;
+    end
+    vesicle_binary = secondary_hp > vesicle_thresh;
+    
+    vesicle_binary = vesicle_binary & not(edge_binary);
+    vesicle_binary = bwpropopen(vesicle_binary,'Area',10,'connectivity',4);
+    
+    inside_region = ~background_region & not(edge_binary);
+    inside_pixels = secondary(inside_region);
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Visualization
@@ -108,7 +121,8 @@ for file_num = 1:length(secondary_files)
         mean(ratio_image(edge_binary)),mean(edge_image(vesicle_binary)),...
         mean(secondary(vesicle_binary)),mean(ratio_image(vesicle_binary)),...
         sum(sum(edge_binary))/sum(sum(~background_region)),...
-        sum(sum(vesicle_binary))/sum(sum(~background_region))]; %#ok<AGROW>
+        sum(sum(vesicle_binary))/sum(sum(~background_region)),...
+        vesicle_thresh]; %#ok<AGROW>
     
     %Ratio Image Banding
     % Check to make sure there is a background region found, otherwise,
@@ -138,7 +152,8 @@ end
 % Data Output
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 headers = {'Edge in Edge','Edge in 2nd','Edge in Ratio','Vesicle in Edge',...
-    'Vesicle in 2nd','Vesicle in Ratio','Edge Area Percent','Vesicle Area Percent'};
+    'Vesicle in 2nd','Vesicle in Ratio','Edge Area Percent','Vesicle Area Percent',...
+    'Vesicle Threshold'};
 csvwrite_with_headers(fullfile(exp_dir,'quantification.csv'),measurements,...
     headers);
 
