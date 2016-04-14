@@ -53,7 +53,7 @@ for file_num = 1:length(secondary_files)
     
     secondary_norm = normalize_image(secondary);
     edge_image_norm = normalize_image(edge_image);
-
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Background Finding
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -104,12 +104,17 @@ for file_num = 1:length(secondary_files)
     secondary_image_highlight = create_highlighted_image(secondary_norm,highlight_set,...
         'mix_percent',0.5,'color_map',highlight_cmap);
     
+    edge_only_highlight = create_highlighted_image(edge_image_norm,edge_binary,...
+        'mix_percent',0.5);
+    
     %%Visualization Output
     [path,edge_name,~] = fileparts(this_edge_file);
     [~,sec_name,~] = fileparts(this_secondary_file);
     
     imwrite(edge_image_highlight,fullfile(path,[edge_name,'_highlight.png']));
     imwrite(secondary_image_highlight,fullfile(path,[sec_name,'_highlight.png']));
+    
+    imwrite(edge_only_highlight,fullfile(path,[edge_name,'_edge_only_highlight.png']));
     
     imwrite(ratio_image,fullfile(path,[sec_name,'_ratio.png']));
     
