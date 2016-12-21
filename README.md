@@ -34,6 +34,6 @@ The ratio images are calculated as edge/vesicle in case these values are of inte
 
 There is another quantification output that measures the mean intensity in the ratio and vesicle images at various distances from the background edge. The size of the band can be adjusted with the 'band_size' option.
 
-###Caveots and Pitfalls
+###Caveats and Pitfalls
 
 The output files are produced for each folder analyzed, so I would organize each condition into seperate folders (e.g. wild-type and knockdown in seperate folders). The visualizations for each image shouls also be inspected to ensure that the methods are properly finding the edge and vesicle regions.
