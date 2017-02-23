@@ -36,4 +36,4 @@ There is another quantification output that measures the mean intensity in the r
 
 ###Caveats and Pitfalls
 
-The output files are produced for each folder analyzed, so I would organize each condition into seperate folders (e.g. wild-type and knockdown in seperate folders). The visualizations for each image shouls also be inspected to ensure that the methods are properly finding the edge and vesicle regions.
+The output files are produced for each folder analyzed, so I would organize each condition into seperate folders (e.g. wild-type and knockdown in seperate folders). The visualizations for each image should also be inspected to ensure that the methods are properly finding the edge and vesicle regions.
