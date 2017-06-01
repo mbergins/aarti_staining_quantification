@@ -2,7 +2,7 @@
 
 This MATLAB script segments the edges and vesicles from two sets of images and then calculates the properties of these structures. It was originally developed for images of E-cadherin staining paired with a secondary vesicular stain, although any set of images with an edge and vesicle label should work. The image with a prominent edge stain is segmented using a high-pass filter and a threshold based on the standard deviation of the filtered image. A similar technique is used to segment the vesicles from the secondary images, with some additional filters on the size of the vesicles. The code also attempts to find a background region of the image that does contain any cells. After finding these structures, a set of visualizations are produced which show where the edges and vesicles were identified. Finally, some properties of the edges and vesicles are quantified.
 
-##Using the Code
+## Using the Code
 
 The primary script is "stain_quant.m" and it makes a few assumptions about how you have your data organized. The only required input is a directory, which is expected to contain a set of images that need to be processed. The other options are not required, but may need to be customized to match your imaging conditions and file naming structure.
 
@@ -14,7 +14,7 @@ The primary script is "stain_quant.m" and it makes a few assumptions about how y
 * vesicle_thresh (optional): A number used to set how stringently to filter the vesicular image
 * band_size (optional): A number used to set how thick the bands should be for analyzing the properties at different distances from the edge of the background region
 
-###Expected Outputs
+### Expected Outputs
 
 The code will produce two types of output: visualizations that indicate where the edges and vesicles are found and quantifications of the stains. The visualization files are all named based on the source file names. The edges are colored with purple, the vesicles with green and the background with blue.
 
@@ -34,6 +34,6 @@ The ratio images are calculated as edge/vesicle in case these values are of inte
 
 There is another quantification output that measures the mean intensity in the ratio and vesicle images at various distances from the background edge. The size of the band can be adjusted with the 'band_size' option.
 
-###Caveats and Pitfalls
+### Caveats and Pitfalls
 
 The output files are produced for each folder analyzed, so I would organize each condition into seperate folders (e.g. wild-type and knockdown in seperate folders). The visualizations for each image should also be inspected to ensure that the methods are properly finding the edge and vesicle regions.
